@@ -9,6 +9,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import os
+import ui
+
+ui_data=ui.run().data
+print("UI data :",ui_data)
 
 file_name=0
 page_num = 0
@@ -25,55 +29,67 @@ correct=[['스피닝'],['수영'],['줌바'],['에어로빅'],['GX'],['GT'],['�
 
 options = Options()
 options.add_argument("--start-maximized")
-driver = webdriver.Chrome(os.getcwd()+'/chromedriver_win32/chromedriver.exe',options=options)
+driver = webdriver.Chrome(os.getcwd()+'/chromedriver',options=options)
 driver.implicitly_wait(3)
 
 
 
-def make_id_list():
-    collect_data()
+# def make_id_list():
+#     collect_data()
+#     while True:
+#         flag = next_page_click()
+#         if not flag:
+#             break
+#         time.sleep(1)
+#         collect_data()
+
+def do_data():
+    time.sleep(3)
+    collect_page()
     while True:
         flag = next_page_click()
         if not flag:
             break
         time.sleep(1)
-        collect_data()
+        collect_page()
 
 
 def next_page_click():
     global page_num, flag, cnt
     cnt = cnt + 1
-    page = driver.find_elements_by_css_selector('div.loaded>a')
-    # print(page_num)
-    if len(page) <= page_num:
+    page = driver.find_elements_by_css_selector('button.btn_next')
+    try:
+        WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn_next")))
+    except:
         return False
     ActionChains(driver).click(page[page_num]).perform()
-    if cnt < 5:
-        page_num = page_num + 1
-    else:
-        if cnt == 5:
-            page_num = 0
-        page_num = (page_num) % 5 + 1
     return True
 
+#
+# def collect_data():
+#     global received_data_cnt
+#     html = driver.page_source
+#     soup = BeautifulSoup(html, 'html.parser')
+#     notices = soup.select('ul.lst_site>li')
+#     received_data_cnt = received_data_cnt + len(notices)
+#     for tmp in notices:
+#         id_list.append(tmp['data-id'][1:])
 
-def collect_data():
+def collect_page():
     global received_data_cnt
-    html = driver.page_source
-    soup = BeautifulSoup(html, 'html.parser')
-    notices = soup.select('ul.lst_site>li')
-    received_data_cnt = received_data_cnt + len(notices)
+    notices=driver.find_elements_by_css_selector('div.title_box')
+    print(notices)
+    ActionChains(driver).click(notices[0]).perform()
     for tmp in notices:
-        id_list.append(tmp['data-id'][1:])
-
-
+        ActionChains(driver).click(tmp).perform()
+        time.sleep(3)
+        driver.back()
 def get_ids(keyword):
     URL = "https://map.naver.com/?query=" + keyword + "&type=SITE_1&queryRank=0"
     driver.get(URL)
     driver.implicitly_wait(10)
 
-    make_id_list()
-
+    do_data()
     print("data_list : ", id_list)
     print("data_list_size :", len(id_list))
     print("received data cnt : ", received_data_cnt)
@@ -296,6 +312,7 @@ def click_submit():
 
 keyword = "대전광역시 헬스장"
 get_ids(keyword)
+# get_ids(ui_data['KEYWORD'])
 #큰사진 =37427547,36947326
 sample_id = ['31663836','34228730']
 for a in sample_id:
@@ -322,7 +339,7 @@ print(data_list)
 site="http://dmonster874.cafe24.com/bbs/login.php?url=http%3A%2F%2Fdmonster874.cafe24.com%2F"
 options = Options()
 options.add_argument("--start-maximized")
-driver=webdriver.Chrome(os.getcwd()+'/chromedriver_win32/chromedriver.exe',options=options)
+driver=webdriver.Chrome(os.getcwd()+'/chromedriver',options=options)
 driver.set_page_load_timeout(100)
 driver.get(site)
 driver.implicitly_wait(3)
