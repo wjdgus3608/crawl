@@ -297,7 +297,7 @@ def click_submit():
 keyword = "대전광역시 헬스장"
 get_ids(keyword)
 #큰사진 =37427547,36947326
-sample_id = ['31663836']
+sample_id = ['31663836','34228730']
 for a in sample_id:
     URL = "https://map.naver.com/local/siteview.nhn?code=" + a
     driver.get(URL)
