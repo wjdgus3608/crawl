@@ -1,6 +1,6 @@
 
 from selenium import webdriver
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 from selenium.webdriver.common.by import By
@@ -11,8 +11,8 @@ from selenium.webdriver.chrome.options import Options
 import os
 import ui
 
-ui_data=ui.run().data
-print("UI data :",ui_data)
+#ui_data=ui.run().data
+#print("UI data :",ui_data)
 
 file_name=0
 page_num = 0
@@ -24,7 +24,8 @@ received_data_cnt = 0
 end_page = 0
 id_list = []
 data_list = []
-correct=[['스피닝'],['수영'],['줌바'],['에어로빅'],['GX'],['GT'],['프리패스'],['요가'],['필라테스'],['골프'],['PT','pt','피티'],['댄스'],['스쿼시'],['골프(모닝)'],['전종목']]
+correct=['스피닝','수영','줌바','에어로빅','G.X','GX','G.T','GT','프리패스','요가','필라테스','골프','PT','pt','피티','댄스','스쿼시','전종목'
+         ,'헬스 + G.X','헬스 + 골프','헬스 + G.X + 골프','크로스핏','헬스 + G.T','헬스 + 요가 + 필라테스','헬스 + 스쿼시','헬스 + 스피닝','헬스(야간)','헬스 + PT']
 
 
 options = Options()
@@ -33,17 +34,17 @@ driver = webdriver.Chrome(os.getcwd()+'/chromedriver',options=options)
 driver.implicitly_wait(3)
 
 
+def fun1(keyword):
+    URL = "https://map.naver.com/?query=" + keyword + "&type=SITE_1&queryRank=0"
+    driver.get(URL)
+    driver.implicitly_wait(10)
 
-# def make_id_list():
-#     collect_data()
-#     while True:
-#         flag = next_page_click()
-#         if not flag:
-#             break
-#         time.sleep(1)
-#         collect_data()
+    get_all_data()
+    print("data_list : ", id_list)
+    print("data_list_size :", len(id_list))
+    print("received data cnt : ", received_data_cnt)
 
-def do_data():
+def get_all_data():
     time.sleep(3)
     collect_page()
     while True:
@@ -53,6 +54,74 @@ def do_data():
         time.sleep(1)
         collect_page()
 
+def collect_page():
+    global received_data_cnt
+    notices = driver.find_elements_by_css_selector('div.title_box')
+    #print(notices)
+    ActionChains(driver).click(notices[0]).perform()
+    for tmp in notices:
+        ActionChains(driver).click(tmp).perform()
+        collect_one_data()
+        time.sleep(3)
+        driver.back()
+
+def collect_one_data():
+    time.sleep(3)
+    #제목
+    title=driver.find_element_by_class_name('summary_title').text
+    #더보기 누르기
+    more_btn=driver.find_elements_by_class_name('btn_more')
+    if len(more_btn)!=0:
+        for tmp in more_btn:
+            ActionChains(driver).click(tmp).perform()
+    #주소
+    address=[]
+    ad_tag=driver.find_elements_by_css_selector('a.end_title')
+    if len(ad_tag)!=0:
+        address.append(ad_tag[0].text)
+    #전화번호
+    phone=[]
+    ph_tag=driver.find_elements_by_css_selector('div.phone>div.end_box>a.link_end')
+    if len(ph_tag)!=0:
+        phone.append(ph_tag[0].text)
+    #시간
+    part = []
+    times=driver.find_elements_by_css_selector('li.item_business')
+    if len(times)!=0:
+        for tmp in times:
+            part.append(tmp.text)
+    #가격
+    prices = []
+    price_tags=driver.find_elements_by_css_selector('div.menu>div.end_box>ul.list_menu>li.item_menu')
+    if len(price_tags)!=0:
+        for tmp in price_tags:
+            prices.append(tmp.text)
+    #세부내용
+    details = []
+    detail_tag=driver.find_elements_by_css_selector('div.detail>div.end_box')
+    if len(detail_tag)!=0:
+        details.append(detail_tag[0].text)
+    # 사진
+    pic_tag = driver.find_elements_by_css_selector('div.link_thumb>img')
+    images = []
+    if len(pic_tag) != 0:
+        ActionChains(driver).click(pic_tag[0]).perform()
+        pic_list = driver.find_elements_by_css_selector('li.item_photo>a>img')
+        for tmp in pic_list:
+            images.append(tmp.get_attribute('src'))
+        driver.back()
+    #데이터 만들기
+    data={}
+    data['images'] = images
+    data['title'] = title
+    data['types'] = ""
+    data['address'] = address
+    data['times'] = part
+    data['phone'] = phone
+    data['prices'] = prices
+    data['details'] = details
+    print(data)
+    data_list.append(data)
 
 def next_page_click():
     global page_num, flag, cnt
@@ -64,35 +133,6 @@ def next_page_click():
         return False
     ActionChains(driver).click(page[page_num]).perform()
     return True
-
-#
-# def collect_data():
-#     global received_data_cnt
-#     html = driver.page_source
-#     soup = BeautifulSoup(html, 'html.parser')
-#     notices = soup.select('ul.lst_site>li')
-#     received_data_cnt = received_data_cnt + len(notices)
-#     for tmp in notices:
-#         id_list.append(tmp['data-id'][1:])
-
-def collect_page():
-    global received_data_cnt
-    notices=driver.find_elements_by_css_selector('div.title_box')
-    print(notices)
-    ActionChains(driver).click(notices[0]).perform()
-    for tmp in notices:
-        ActionChains(driver).click(tmp).perform()
-        time.sleep(3)
-        driver.back()
-def get_ids(keyword):
-    URL = "https://map.naver.com/?query=" + keyword + "&type=SITE_1&queryRank=0"
-    driver.get(URL)
-    driver.implicitly_wait(10)
-
-    do_data()
-    print("data_list : ", id_list)
-    print("data_list_size :", len(id_list))
-    print("received data cnt : ", received_data_cnt)
 
 
 def make_data():
@@ -165,26 +205,26 @@ def insert_data(data):
     else:
         out=False
     # 사진
-    pic_cnt=len(data['images'])
-    for i in range(1,20 if pic_cnt>20 else pic_cnt):
-        add_pic_box(pic_cnt)
-    picture = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.CLASS_NAME,'reg_file')))
-    ele = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.NAME,'bf_file[]')))
-    if pic_cnt==0:
-        ele[0].send_keys(os.getcwd()+'/No_Picture.jpg')
-    elif pic_cnt==1 and data['images'][0]==None:
-        ele[0].send_keys(os.getcwd()+'/No_Picture.jpg')
-    else:
-        for i in range(0,20 if pic_cnt>20 else pic_cnt):
-            pic_url = data['images'][i]
-            response = requests.get(pic_url)
-            file_name=file_name+1;
-            open(os.getcwd()+'/pic/'+str(file_name)+'.jpeg', 'wb').write(response.content)
-            time.sleep(4)
-            ele[i].send_keys(os.getcwd()+'/pic/'+str(file_name)+'.jpeg')
-            str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
-            driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
-            driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
+    # pic_cnt=len(data['images'])
+    # for i in range(1,20 if pic_cnt>20 else pic_cnt):
+    #     add_pic_box(pic_cnt)
+    # picture = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.CLASS_NAME,'reg_file')))
+    # ele = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.NAME,'bf_file[]')))
+    # if pic_cnt==0:
+    #     ele[0].send_keys(os.getcwd()+'/No_Picture.jpg')
+    # elif pic_cnt==1 and data['images'][0]==None:
+    #     ele[0].send_keys(os.getcwd()+'/No_Picture.jpg')
+    # else:
+    #     for i in range(0,20 if pic_cnt>20 else pic_cnt):
+    #         pic_url = data['images'][i]
+    #         response = requests.get(pic_url)
+    #         file_name=file_name+1;
+    #         open(os.getcwd()+'/pic/'+str(file_name)+'.jpeg', 'wb').write(response.content)
+    #         time.sleep(4)
+    #         ele[i].send_keys(os.getcwd()+'/pic/'+str(file_name)+'.jpeg')
+    #         str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
+    #         driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
+    #         driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
     #제목
     title =WebDriverWait(driver,60).until(EC.presence_of_element_located((By.NAME,'g_name')))
     ActionChains(driver).send_keys_to_element(title, data['title']).perform()
@@ -194,47 +234,67 @@ def insert_data(data):
     driver.switch_to.frame(iframe[0])
     locate = WebDriverWait(driver,60).until(EC.presence_of_element_located((By.ID,'gym_keyword')))
     add=""
-    str_tmp=data['address'].split(" ")
-    for idx in range(0,5 if len(str_tmp)>4 else len(str_tmp)):
+    str_tmp=data['address'][0].split(" ")
+    for idx in range(0,4 if len(str_tmp)>4 else len(str_tmp)):
         add=add+str_tmp[idx]+" "
     ActionChains(driver).send_keys_to_element(locate, add).perform()
     ActionChains(driver).click(driver.find_element_by_class_name('btn_search')).perform()
     tmp_tag=WebDriverWait(driver,60).until(EC.presence_of_element_located((By.ID,'placesList'))).find_elements_by_tag_name('li')
     if len(tmp_tag)!=0:
-        if len(str_tmp) > 5:
-            tags = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.TAG_NAME,'h5')))
-            tf=True
-            for sstr in range(0,len(tags)):
-                if str_tmp[5].find(tags[sstr].text) != -1:
-                    ActionChains(driver).click(tmp_tag[sstr]).perform()
-                    tf=False
-                    break
-            if tf:
-                ActionChains(driver).click(tmp_tag[0]).perform()
-        else:
+        tf=False
+        pg=driver.find_elements_by_css_selector('#pagination>a')
+        pg_size=len(pg)
+        for j in range(0,pg_size):
+            pg = driver.find_elements_by_css_selector('#pagination>a')
+            ActionChains(driver).click(pg[j]).perform()
+            time.sleep(1)
+            tags = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h5')))
+            stop=False
+            for k in range(0,len(tags)):
+                if tags[k].text.find(data['title'])!=-1:
+                    tf=True
+                    ActionChains(driver).click(tags[k]).perform()
+                    stop=True
+                    break;
+            if stop:
+                break;
+        if not tf:
             ActionChains(driver).click(tmp_tag[0]).perform()
     driver.switch_to.default_content()
     time.sleep(1)
 
+    #세부내용 + 가격
+    texts = ""
+    price_size = len(data['prices'])
+    if price_size != 0:
+        for ttm in data['prices']:
+            tmp = ttm.split('\n')
+            texts = texts + tmp[1] + " : " + tmp[0] + "\n"
+        texts = texts + "\n\n"
+    if len(data['details']) != 0:
+        texts = texts + data['details'][0]
     #종목
-    type_size=len(data['types'])
-    type_add = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.CLASS_NAME,'btn_add')))
+    type_add = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'btn_add')))
     ActionChains(driver).click(type_add[1]).perform()
-    time.sleep(1)
-    if type_size!=0:
-        index=1
-        for i in range(0,type_size):
-            for j in range(0,len(correct)):
-                for k in correct[j]:
-                    if data['types'][i]=='헬스':
-                        continue
-                    if data['types'][i].find(k)!=-1:
-                        type_add = WebDriverWait(driver,60).until(EC.presence_of_all_elements_located((By.CLASS_NAME,'btn_add')))
-                        ActionChains(driver).click(type_add[1]).perform()
-                        scroll =driver.find_element_by_name('g_category[' + str(index) + ']').find_elements_by_tag_name('option')
-                        driver.execute_script("arguments[0].setAttribute('selected','')",scroll[j+1])
-                        index=index+1
+    type_cnt=1
+    index=1
+    if len(texts)!=0:
+        pressed_details=texts.replace(" ","")
+        for tmp in correct:
+            k=tmp.replace(" ","")
+            if pressed_details.find(k) != -1:
+                if type_cnt==9:
+                    break
+                type_add = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'btn_add')))
+                ActionChains(driver).click(type_add[1]).perform()
+                type_cnt=type_cnt+1
+                scroll = driver.find_element_by_name('g_category[' + str(index) + ']').find_elements_by_tag_name('option')
+                for j in range(0, len(scroll)):
+                    if scroll[j].text==tmp:
+                        driver.execute_script("arguments[0].setAttribute('selected','')", scroll[j])
                         break
+                index = index + 1
+
     time.sleep(1)
     #이용시간
     use_time1 = WebDriverWait(driver,60).until(EC.presence_of_element_located((By.NAME,'use_hours_0')))
@@ -244,7 +304,7 @@ def insert_data(data):
     sat_text = ""
     hol_text = ""
     for i in range(0,len(data['times'])):
-        temp=data['times'][i].splitlines()
+        temp=data['times'][i].split()
         if temp[0]=='평일':
             mon_text=mon_text+temp[1]
         elif temp[1]=='휴관' or temp[1]=='휴무':
@@ -271,16 +331,6 @@ def insert_data(data):
         ActionChains(driver).send_keys_to_element(phone, data['phone'][0]).perform()
     time.sleep(1)
     #세부내용
-    texts=""
-    price_size=len(data['prices'])
-    if price_size!=0:
-        idx=0
-        while idx<price_size:
-            texts=texts+data['prices'][idx]+" : "+data['prices'][idx+1]+"\n"
-            idx=idx+2
-        texts=texts+"\n\n"
-    if len(data['details'])!=0:
-        texts=texts+data['details'][0]
     driver.switch_to.frame(iframe[1])
     detail = WebDriverWait(driver,60).until(EC.presence_of_element_located((By.CLASS_NAME,'se2_input_wysiwyg')))
     if texts=="":
@@ -310,16 +360,17 @@ def click_submit():
     submit_btn=WebDriverWait(driver,60).until(EC.presence_of_element_located((By.CLASS_NAME,'btn_submit')))
     ActionChains(driver).click(submit_btn).perform()
 
-keyword = "대전광역시 헬스장"
-get_ids(keyword)
+#keyword = "대전광역시 헬스장"
+keyword = "스포애니 강남역1호점"
+fun1(keyword)
 # get_ids(ui_data['KEYWORD'])
 #큰사진 =37427547,36947326
-sample_id = ['31663836','34228730']
-for a in sample_id:
-    URL = "https://map.naver.com/local/siteview.nhn?code=" + a
-    driver.get(URL)
-    time.sleep(1)
-    make_data()
+# sample_id = ['31663836','34228730']
+# for a in sample_id:
+#     URL = "https://map.naver.com/local/siteview.nhn?code=" + a
+#     driver.get(URL)
+#     time.sleep(1)
+#     make_data()
 
 show=0
 
