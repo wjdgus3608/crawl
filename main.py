@@ -18,12 +18,13 @@ print("mode:",mode)
 ui_data={};
 if(mode==1):
     ui_data=dataInput_ui.DataInputUI().run()
+    app = QApplication(sys.argv)
+    window = progress_ui.ProgressUI()
+    sys.exit(app.exec_())
 elif(mode==2):
     ui_data=tag_ui.TagUI().run()
-print("ui_data:",ui_data)
 
-app = QApplication(sys.argv)
-window = progress_ui.ProgressUI()
-sys.exit(app.exec_())
+
+
 
 

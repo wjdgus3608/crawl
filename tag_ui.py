@@ -1,61 +1,47 @@
 import sys
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
+import os
 class TagUI(QWidget):
+    app = QApplication(sys.argv)
+    f = open(os.getcwd()+"/tag.txt", 'r')
+    f2 = open(os.getcwd()+"/tag.txt", 'a')
     data={}
     def __init__(self):
         super().__init__()
-        self.data=self.initUI()
 
     def initUI(self):
-
+        line = self.f.readline()
 
         self.setWindowTitle('니짐내짐 데이터 입력 프로그램')
         self.setWindowIcon(QIcon('니짐내짐.png'))
         self.resize(500, 500)
         self.center()
 #   라벨
-        keyword_lb = QLabel('검색어', self)
-        id_lb = QLabel('니짐내짐 ID', self)
-        pw_lb = QLabel('니짐내짐 PW', self)
-        address_lb = QLabel('입력주소 어절', self)
-        address_des = QLabel('ex)서울 영등포구 양평로 64 한경빌딩 4층 -> 3입력 -> 서울 영등포구 양평로', self)
-        log_lb = QLabel('Logs', self)
-        progress_lb = QLabel('진행률', self)
 
-        font1 = keyword_lb.font()
-        font1.setPointSize(20)
+        progress_lb = QLabel('태그 상태', self)
+        self.txt_wid = QTextEdit()
+        self.txt_wid.setMaximumSize(150, 30)
+        self.tag_wid = QListWidget()
+        str=line.split(',')
+        print(str)
+        for tmp in str:
+            self.tag_wid.addItem(tmp)
+        btn = QPushButton('추가', self)
+        btn2 = QPushButton('삭제', self)
+        btn3 = QPushButton('닫기', self)
 
-        btn = QPushButton('실행', self)
 
-
-        self.keyword_tx=QTextEdit()
-        self.id_tx=QTextEdit()
-        self.pw_tx=QTextEdit()
-        self.address_tx=QSpinBox()
-        self.log_wid=QListWidget()
-        self.progress_wid=QProgressBar()
-        btn.clicked.connect(self.submit)
-        self.keyword_tx.setMaximumSize(150,30)
-        self.id_tx.setMaximumSize(150,30)
-        self.pw_tx.setMaximumSize(150,30)
-        self.address_tx.setRange(1,6)
+        btn.clicked.connect(self.add)
+        btn2.clicked.connect(self.delete)
+        btn3.clicked.connect(self.close)
 
 #박스 설정
-        hbox = self.add_box([keyword_lb,self.keyword_tx])
-        hbox2 = self.add_box([id_lb,self.id_tx])
-        hbox3 = self.add_box([pw_lb,self.pw_tx])
-        hbox4 = self.add_box([address_lb,self.address_tx])
-        hbox5 = self.add_box([address_des])
-        hbox6 = self.add_box([log_lb])
-        hbox7 = self.add_box([self.log_wid])
-        hbox8 = self.add_box([progress_lb,self.progress_wid])
+        hbox = self.add_box([progress_lb])
+        hbox2 = self.add_box([self.tag_wid])
+        hbox3 = self.add_box([self.txt_wid,btn,btn2])
+        hbox4 = self.add_box([btn3])
 
-
-        hboxLast = QHBoxLayout()
-        hboxLast.addStretch(1)
-        hboxLast.addWidget(btn)
-        hboxLast.addStretch(1)
 
         vbox = QVBoxLayout()
         vbox.addStretch(3)
@@ -63,11 +49,6 @@ class TagUI(QWidget):
         vbox.addLayout(hbox2)
         vbox.addLayout(hbox3)
         vbox.addLayout(hbox4)
-        vbox.addLayout(hbox5)
-        vbox.addLayout(hbox6)
-        vbox.addLayout(hbox7)
-        vbox.addLayout(hbox8)
-        vbox.addLayout(hboxLast)
         vbox.addStretch(3)
 
         self.setLayout(vbox)
@@ -80,12 +61,22 @@ class TagUI(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def submit(self):
-        print("submit clicked!!")
-        self.data['ID']=self.id_tx.toPlainText()
-        self.data['PW']=self.pw_tx.toPlainText()
-        self.data['KEYWORD']=self.keyword_tx.toPlainText()
-        self.data['ADD_CNT']=self.address_tx.value()
+    def add(self):
+        self.tag_wid.addItem(self.txt_wid.toPlainText())
+        self.f2.write(','+self.txt_wid.toPlainText())
+        self.txt_wid.clear()
+
+    def delete(self):
+        f3 = open(os.getcwd()+"/tag.txt", 'w')
+        self.tag_wid.takeItem(self.tag_wid.currentRow())
+        for index in range(0,self.tag_wid.count()):
+            if index!=0:
+                f3.write(','+self.tag_wid.item(index).text())
+            else:
+                f3.write(self.tag_wid.item(index).text())
+
+    def close(self):
+        self.close()
 
     def add_box(self,wid):
         hbox=QHBoxLayout()
@@ -95,11 +86,9 @@ class TagUI(QWidget):
         hbox.addStretch(1)
         return hbox
 
-
-def run():
-    app = QApplication(sys.argv)
-    ex = TagUI()
-    app.exec()
-    #sys.exit(app.exec_())
-    return ex
+    def run(self):
+        self.initUI()
+        self.show()
+        self.app.exec_()
+        return self.data
 

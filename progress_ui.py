@@ -21,29 +21,29 @@ class ProgressUI(QWidget):
 #   라벨
         log_lb = QLabel('Logs', self)
         progress_lb = QLabel('진행률', self)
+        self.progress_value_lb=QLabel('0%', self)
 
-        btn = QPushButton('취소', self)
+        self.btn = QPushButton('취소', self)
 
         self.log_wid=QListWidget()
         self.progress_wid=QProgressBar()
-        btn.clicked.connect(self.submit)
+
+        self.btn.clicked.connect(self.submit)
 
 #박스 설정
-        hbox6 = self.add_box([log_lb])
-        hbox7 = self.add_box([self.log_wid])
-        hbox8 = self.add_box([progress_lb,self.progress_wid])
+        hbox7 = self.add_box([log_lb,self.log_wid])
+        hbox8 = self.add_box([progress_lb,self.progress_wid,self.progress_value_lb])
 
 
         hboxLast = QHBoxLayout()
         hboxLast.addStretch(1)
-        hboxLast.addWidget(btn)
+        hboxLast.addWidget(self.btn)
         hboxLast.addStretch(1)
 
         vbox = QVBoxLayout()
         vbox.addStretch(3)
-        vbox.addLayout(hbox6)
-        vbox.addLayout(hbox7)
         vbox.addLayout(hbox8)
+        vbox.addLayout(hbox7)
         vbox.addLayout(hboxLast)
         vbox.addStretch(3)
 
@@ -52,7 +52,22 @@ class ProgressUI(QWidget):
         th1 = work.Work(self)
 
         th1.start()
+        th1.countChanged.connect(self.onCountChanged)
+        th1.logChanged.connect(self.onLogChanged)
+        th1.insertChanged.connect(self.onInsertChanged)
         return self.data;
+
+    def onCountChanged(self, value):
+        self.progress_wid.setValue(value)
+        self.progress_value_lb.setText(str(value)+'%')
+        if(value==100):
+            self.btn.setText("완료")
+    def onLogChanged(self, log):
+        self.log_wid.addItem(log)
+
+    def onInsertChanged(self, inserted):
+        for index in range(0,self.log_wid.count()):
+            self.log_wid.addItem(self.log_wid.item(index).text()+inserted)
 
     def center(self):
         qr = self.frameGeometry()
@@ -61,7 +76,6 @@ class ProgressUI(QWidget):
         self.move(qr.topLeft())
 
     def submit(self):
-        print("submit clicked!!")
         self.close()
 
     def add_box(self,wid):
