@@ -7,12 +7,12 @@ import work
 class ProgressUI(QWidget):
 
     data={}
-    def __init__(self):
+    def __init__(self,ui_data):
         super().__init__()
+        self.data=ui_data
         self.initUI()
 
     def initUI(self):
-
 
         self.setWindowTitle('니짐내짐 데이터 입력 프로그램')
         self.setWindowIcon(QIcon('니짐내짐.png'))
@@ -49,7 +49,7 @@ class ProgressUI(QWidget):
 
         self.setLayout(vbox)
         self.show()
-        th1 = work.Work(self)
+        th1 = work.Work(self.data)
 
         th1.start()
         th1.countChanged.connect(self.onCountChanged)

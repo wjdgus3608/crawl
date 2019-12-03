@@ -5,7 +5,6 @@ import os
 class TagUI(QWidget):
     app = QApplication(sys.argv)
     f = open(os.getcwd()+"/tag.txt", 'r')
-    f2 = open(os.getcwd()+"/tag.txt", 'a')
     data={}
     def __init__(self):
         super().__init__()
@@ -34,7 +33,7 @@ class TagUI(QWidget):
 
         btn.clicked.connect(self.add)
         btn2.clicked.connect(self.delete)
-        btn3.clicked.connect(self.close)
+        btn3.clicked.connect(self.closewin)
 
 #박스 설정
         hbox = self.add_box([progress_lb])
@@ -62,9 +61,11 @@ class TagUI(QWidget):
         self.move(qr.topLeft())
 
     def add(self):
-        self.tag_wid.addItem(self.txt_wid.toPlainText())
-        self.f2.write(','+self.txt_wid.toPlainText())
-        self.txt_wid.clear()
+        f2 = open(os.getcwd() + "/tag.txt", 'a')
+        if self.txt_wid.toPlainText()!='':
+            self.tag_wid.addItem(self.txt_wid.toPlainText())
+            f2.write(','+self.txt_wid.toPlainText())
+            self.txt_wid.clear()
 
     def delete(self):
         f3 = open(os.getcwd()+"/tag.txt", 'w')
@@ -75,7 +76,7 @@ class TagUI(QWidget):
             else:
                 f3.write(self.tag_wid.item(index).text())
 
-    def close(self):
+    def closewin(self):
         self.close()
 
     def add_box(self,wid):

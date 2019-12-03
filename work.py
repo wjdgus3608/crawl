@@ -28,12 +28,18 @@ class Work(QThread):
     received_data_cnt = 0
     id_list = []
     data_list = []
-    correct = ['스피닝', '수영', '줌바', '에어로빅', 'G.X', 'GX', 'G.T', 'GT', '프리패스', '요가', '필라테스', '골프', 'PT', 'pt',
-               '피티', '댄스', '스쿼시', '전종목'
-        , '헬스 + G.X', '헬스 + 골프', '헬스 + G.X + 골프', '크로스핏', '헬스 + G.T', '헬스 + 요가 + 필라테스', '헬스 + 스쿼시', '헬스 + 스피닝',
-               '헬스(야간)', '헬스 + PT']
-    def run(self):
+    correct = []
+    input_data={}
+    def __init__(self, ui_data):
+        super().__init__()
+        self.input_data=ui_data
 
+    def run(self):
+        f = open(os.getcwd() + "/tag.txt", 'r')
+        read = f.readline()
+        read_sp = read.split(',')
+        for tmp in read_sp:
+            self.correct.append(tmp)
         while True:
             self.countChanged.emit(self.qcnt)
 
@@ -44,7 +50,7 @@ class Work(QThread):
 
 
             # keyword = "대전광역시 헬스장"
-            keyword = "스포애니 강남역 1호점"
+            keyword = self.input_data['KEYWORD']
             self.fun1(keyword,driver)
 
             print("searched data : " + str(len(self.data_list)))
@@ -62,8 +68,8 @@ class Work(QThread):
             id_box = driver.find_element_by_id('login_id')
             pw_box = driver.find_element_by_id('login_pw')
             login_btn = driver.find_element_by_class_name('btn_submit')
-            ActionChains(driver).send_keys_to_element(id_box, 'manager3').send_keys_to_element(pw_box,
-                                                                                               'manager3').click(
+            ActionChains(driver).send_keys_to_element(id_box, self.input_data['ID']).send_keys_to_element(pw_box,
+                                                                                               self.input_data['PW']).click(
                 login_btn).perform()
             admin_btn = driver.find_elements_by_tag_name('a')
             ActionChains(driver).click(admin_btn[3]).perform()
@@ -207,29 +213,27 @@ class Work(QThread):
         else:
             self.out = False
         # 사진
+        pic_cnt = len(data['images'])
+        for i in range(1, 20 if pic_cnt > 20 else pic_cnt):
+            self.add_pic_box(pic_cnt,driver)
+        picture = WebDriverWait(driver, 60).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, 'reg_file')))
         ele = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.NAME, 'bf_file[]')))
-        ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
-        # pic_cnt = len(data['images'])
-        # for i in range(1, 20 if pic_cnt > 20 else pic_cnt):
-        #     self.add_pic_box(pic_cnt,driver)
-        # picture = WebDriverWait(driver, 60).until(
-        #     EC.presence_of_all_elements_located((By.CLASS_NAME, 'reg_file')))
-        # ele = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.NAME, 'bf_file[]')))
-        # if pic_cnt == 0:
-        #     ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
-        # elif pic_cnt == 1 and data['images'][0] == None:
-        #     ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
-        # else:
-        #     for i in range(0, 20 if pic_cnt > 20 else pic_cnt):
-        #         pic_url = data['images'][i]
-        #         response = requests.get(pic_url)
-        #         self.file_name = self.file_name + 1;
-        #         open(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg', 'wb').write(response.content)
-        #         time.sleep(4)
-        #         ele[i].send_keys(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg')
-        #         str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
-        #         driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
-        #         driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
+        if pic_cnt == 0:
+            ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
+        elif pic_cnt == 1 and data['images'][0] == None:
+            ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
+        else:
+            for i in range(0, 20 if pic_cnt > 20 else pic_cnt):
+                pic_url = data['images'][i]
+                response = requests.get(pic_url)
+                self.file_name = self.file_name + 1;
+                open(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg', 'wb').write(response.content)
+                time.sleep(4)
+                ele[i].send_keys(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg')
+                str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
+                driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
+                driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
         # 제목
         title = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'g_name')))
         ActionChains(driver).send_keys_to_element(title, data['title']).perform()
@@ -240,7 +244,8 @@ class Work(QThread):
         locate = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'gym_keyword')))
         add = ""
         str_tmp = data['address'][0].split(" ")
-        for idx in range(0, 4 if len(str_tmp) > 4 else len(str_tmp)):
+        parse_num=self.input_data['ADD_CNT']
+        for idx in range(0, parse_num if len(str_tmp) > parse_num else len(str_tmp)):
             add = add + str_tmp[idx] + " "
         ActionChains(driver).send_keys_to_element(locate, add).perform()
         ActionChains(driver).click(driver.find_element_by_class_name('btn_search')).perform()

@@ -19,7 +19,7 @@ class DataInputUI(QWidget):
         id_lb = QLabel('니짐내짐 ID', self)
         pw_lb = QLabel('니짐내짐 PW', self)
         address_lb = QLabel('입력주소 어절', self)
-        address_des = QLabel('ex)서울 영등포구 양평로 64 한경빌딩 4층 -> 3입력 -> 서울 영등포구 양평로', self)
+        address_des = QLabel('ex)서울 영등포구 양평로 64 한경빌딩 4층 -> 4입력(추천) -> 서울 영등포구 양평로', self)
 
         font1 = keyword_lb.font()
         font1.setPointSize(20)
@@ -73,11 +73,19 @@ class DataInputUI(QWidget):
 
     def submit(self):
         print("submit clicked!!")
-        self.data['ID']=self.id_tx.toPlainText()
-        self.data['PW']=self.pw_tx.toPlainText()
-        self.data['KEYWORD']=self.keyword_tx.toPlainText()
-        self.data['ADD_CNT']=self.address_tx.value()
-        self.close()
+        idtxt=self.id_tx.toPlainText()
+        pwtxt=self.pw_tx.toPlainText()
+        keywordtxt=self.keyword_tx.toPlainText()
+        if idtxt!='' and pwtxt!='' and keywordtxt!='':
+            self.data['ID']=idtxt
+            self.data['PW']=pwtxt
+            self.data['KEYWORD']=keywordtxt
+            self.data['ADD_CNT']=self.address_tx.value()
+            self.close()
+        else:
+            msgBox = QMessageBox()
+            msgBox.setText("내용을 모두 입력해주세요")
+            msgBox.exec_()
 
     def add_box(self,wid):
         hbox=QHBoxLayout()
