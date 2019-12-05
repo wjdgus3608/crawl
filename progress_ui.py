@@ -10,6 +10,7 @@ class ProgressUI(QWidget):
     def __init__(self,ui_data):
         super().__init__()
         self.data=ui_data
+        self.th1 = work.Work(self.data)
         self.initUI()
 
     def initUI(self):
@@ -49,12 +50,12 @@ class ProgressUI(QWidget):
 
         self.setLayout(vbox)
         self.show()
-        th1 = work.Work(self.data)
 
-        th1.start()
-        th1.countChanged.connect(self.onCountChanged)
-        th1.logChanged.connect(self.onLogChanged)
-        th1.insertChanged.connect(self.onInsertChanged)
+
+        self.th1.start()
+        self.th1.countChanged.connect(self.onCountChanged)
+        self.th1.logChanged.connect(self.onLogChanged)
+        self.th1.insertChanged.connect(self.onInsertChanged)
         return self.data;
 
     def onCountChanged(self, value):

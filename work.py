@@ -35,7 +35,7 @@ class Work(QThread):
         self.input_data=ui_data
 
     def run(self):
-        f = open(os.getcwd() + "/tag.txt", 'r')
+        f = open(os.getcwd() + "/tag.txt", 'r',encoding='UTF8')
         read = f.readline()
         read_sp = read.split(',')
         for tmp in read_sp:
@@ -45,7 +45,7 @@ class Work(QThread):
 
             options = Options()
             options.add_argument("--start-maximized")
-            driver = webdriver.Chrome(os.getcwd() + '/chromedriver', options=options)
+            driver = webdriver.Chrome(os.getcwd() + '/chromedriver.exe', options=options)
             driver.implicitly_wait(3)
 
 
@@ -54,13 +54,13 @@ class Work(QThread):
             self.fun1(keyword,driver)
 
             print("searched data : " + str(len(self.data_list)))
-            print(self.data_list)
+            #print(self.data_list)
             # gym site inesert
 
             site = "http://dmonster874.cafe24.com/bbs/login.php?url=http%3A%2F%2Fdmonster874.cafe24.com%2F"
             options = Options()
             options.add_argument("--start-maximized")
-            driver = webdriver.Chrome(os.getcwd() + '/chromedriver', options=options)
+            driver = webdriver.Chrome(os.getcwd() + '/chromedriver.exe', options=options)
             driver.set_page_load_timeout(100)
             driver.get(site)
             driver.implicitly_wait(3)
@@ -190,7 +190,7 @@ class Work(QThread):
         data['phone'] = phone
         data['prices'] = prices
         data['details'] = details
-        print(data)
+        #print(data)
         log=data['title']
         self.logChanged.emit(log)
         self.data_list.append(data)

@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import *
 
 ui=index_ui.IndexUI()
 mode=ui.run()
-print("mode:",mode)
 ui_data={}
 if(mode==1):
     ui_data=dataInput_ui.DataInputUI().run()
@@ -29,7 +28,7 @@ elif(mode==2):
 
 
 
-
+# work.Work("").run()
 
 
 

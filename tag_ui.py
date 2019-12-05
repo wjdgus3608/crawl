@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 import os
 class TagUI(QWidget):
     app = QApplication(sys.argv)
-    f = open(os.getcwd()+"/tag.txt", 'r')
+    f = open(os.getcwd()+"/tag.txt", 'r',encoding='UTF8')
     data={}
     def __init__(self):
         super().__init__()
@@ -23,7 +23,6 @@ class TagUI(QWidget):
         self.txt_wid.setMaximumSize(150, 30)
         self.tag_wid = QListWidget()
         str=line.split(',')
-        print(str)
         for tmp in str:
             self.tag_wid.addItem(tmp)
         btn = QPushButton('추가', self)
@@ -61,14 +60,14 @@ class TagUI(QWidget):
         self.move(qr.topLeft())
 
     def add(self):
-        f2 = open(os.getcwd() + "/tag.txt", 'a')
+        f2 = open(os.getcwd() + "/tag.txt", 'a',encoding='UTF8')
         if self.txt_wid.toPlainText()!='':
             self.tag_wid.addItem(self.txt_wid.toPlainText())
             f2.write(','+self.txt_wid.toPlainText())
             self.txt_wid.clear()
 
     def delete(self):
-        f3 = open(os.getcwd()+"/tag.txt", 'w')
+        f3 = open(os.getcwd()+"/tag.txt", 'w',encoding='UTF8')
         self.tag_wid.takeItem(self.tag_wid.currentRow())
         for index in range(0,self.tag_wid.count()):
             if index!=0:
