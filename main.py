@@ -1,13 +1,4 @@
 import sys
-from selenium import webdriver
-#from bs4 import BeautifulSoup
-from selenium.webdriver.common.action_chains import ActionChains
-import time
-from selenium.webdriver.common.by import By
-import requests
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 import os
 import index_ui, dataInput_ui, tag_ui, progress_ui, work
 from PyQt5.QtWidgets import *
@@ -27,8 +18,7 @@ elif(mode==2):
     ui_data=tag_ui.TagUI().run()
 
 
-
-# work.Work("").run()
+# work.Work({"KEYWORD":"스타짐 서면점","ID":"manager3","PW":"manager3","ADD_CNT":4}).run()
 
 
 

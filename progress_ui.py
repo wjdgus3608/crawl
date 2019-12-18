@@ -7,6 +7,7 @@ import work
 class ProgressUI(QWidget):
 
     data={}
+    index=0;
     def __init__(self,ui_data):
         super().__init__()
         self.data=ui_data
@@ -22,7 +23,7 @@ class ProgressUI(QWidget):
 #   라벨
         log_lb = QLabel('Logs', self)
         progress_lb = QLabel('진행률', self)
-        self.progress_value_lb=QLabel('0%', self)
+
 
         self.btn = QPushButton('취소', self)
 
@@ -33,7 +34,7 @@ class ProgressUI(QWidget):
 
 #박스 설정
         hbox7 = self.add_box([log_lb,self.log_wid])
-        hbox8 = self.add_box([progress_lb,self.progress_wid,self.progress_value_lb])
+        hbox8 = self.add_box([progress_lb,self.progress_wid])
 
 
         hboxLast = QHBoxLayout()
@@ -60,15 +61,14 @@ class ProgressUI(QWidget):
 
     def onCountChanged(self, value):
         self.progress_wid.setValue(value)
-        self.progress_value_lb.setText(str(value)+'%')
         if(value==100):
             self.btn.setText("완료")
     def onLogChanged(self, log):
         self.log_wid.addItem(log)
 
     def onInsertChanged(self, inserted):
-        for index in range(0,self.log_wid.count()):
-            self.log_wid.addItem(self.log_wid.item(index).text()+inserted)
+        self.log_wid.addItem(self.log_wid.item(self.index).text()+inserted)
+        self.index=self.index+1;
 
     def center(self):
         qr = self.frameGeometry()

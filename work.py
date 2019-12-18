@@ -117,6 +117,8 @@ class Work(QThread):
 
     def get_all_data(self,driver):
         time.sleep(3)
+        notices = driver.find_elements_by_css_selector('div.title_box')
+        ActionChains(driver).click(notices[0]).perform()
         self.collect_page(driver)
         while True:
             flag = self.next_page_click(driver)
@@ -128,7 +130,6 @@ class Work(QThread):
     def collect_page(self,driver):
         notices = driver.find_elements_by_css_selector('div.title_box')
         # print(notices)
-        ActionChains(driver).click(notices[0]).perform()
         for tmp in notices:
             ActionChains(driver).click(tmp).perform()
             self.collect_one_data(driver)
@@ -172,14 +173,19 @@ class Work(QThread):
         if len(detail_tag) != 0:
             details.append(detail_tag[0].text)
         # 사진
-        pic_tag = driver.find_elements_by_css_selector('div.link_thumb>img')
         images = []
-        if len(pic_tag) != 0:
-            ActionChains(driver).click(pic_tag[0]).perform()
-            pic_list = driver.find_elements_by_css_selector('li.item_photo>a>img')
-            for tmp in pic_list:
-                images.append(tmp.get_attribute('src'))
-            driver.back()
+        pic_tag_check = driver.find_elements_by_css_selector('div.link_thumb>span')
+        if pic_tag_check[0].text.find("사진")!=-1:
+            pic_tag = driver.find_elements_by_css_selector('div.link_thumb>img')
+            if len(pic_tag) != 0:
+                ActionChains(driver).click(pic_tag[0]).perform()
+                #pic_list = driver.find_elements_by_css_selector('li.item_photo>a>img')
+                pic_list = driver.find_elements_by_css_selector('li.item_photo>a')
+                for tmp in pic_list:
+                    ActionChains(driver).click(tmp).perform()
+                    photo_tag=driver.find_element_by_css_selector('img.photo_viewer_thumb')
+                    images.append(photo_tag.get_attribute('src'))
+                driver.back()
         # 데이터 만들기
         data = {}
         data['images'] = images
@@ -226,14 +232,22 @@ class Work(QThread):
         else:
             for i in range(0, 20 if pic_cnt > 20 else pic_cnt):
                 pic_url = data['images'][i]
-                response = requests.get(pic_url)
+                try:
+                    response = requests.get(pic_url, timeout=10, stream=True)
+                except requests.exceptions.InvalidSchema:
+                    print("passed")
+                    continue
                 self.file_name = self.file_name + 1;
-                open(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg', 'wb').write(response.content)
-                time.sleep(4)
-                ele[i].send_keys(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg')
-                str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
-                driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
-                driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
+                try:
+                    open(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg', 'wb').write(response.content)
+                    time.sleep(1)
+                    ele[i].send_keys(os.getcwd() + '/pic/' + str(self.file_name) + '.jpeg')
+                    str1 = "background-image: url('" + pic_url + "'); background-size: cover; opacity: 1;"
+                    driver.execute_script("arguments[0].setAttribute('style',arguments[1])", picture[i], str1)
+                    driver.execute_script("arguments[0].setAttribute('class','reg_file on')", picture[i])
+                except IOError:
+                    print("사진파일을 읽어올 수 없습니다.")
+
         # 제목
         title = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.NAME, 'g_name')))
         ActionChains(driver).send_keys_to_element(title, data['title']).perform()
@@ -257,20 +271,24 @@ class Work(QThread):
             pg_size = len(pg)
             for j in range(0, pg_size):
                 pg = driver.find_elements_by_css_selector('#pagination>a')
-                ActionChains(driver).click(pg[j]).perform()
-                time.sleep(1)
+                if j!=0:
+                    ActionChains(driver).click(pg[j]).perform()
+                    time.sleep(1)
                 tags = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h5')))
                 stop = False
+                if tf==False:
+                    if len(tags)>2:
+                        ActionChains(driver).click(tags[1]).perform()
                 for k in range(0, len(tags)):
-                    if tags[k].text.find(data['title']) != -1:
+                    my_txt = tags[k].text.replace(" ", "")
+                    if my_txt.find(data['title'].replace(" ", "")) != -1:
                         tf = True
+                        print("find")
                         ActionChains(driver).click(tags[k]).perform()
                         stop = True
                         break;
                 if stop:
                     break;
-            if not tf:
-                ActionChains(driver).click(tmp_tag[0]).perform()
         driver.switch_to.default_content()
         time.sleep(1)
 
@@ -330,11 +348,11 @@ class Work(QThread):
                     sat_text = sat_text + " / "
                 sat_text = sat_text + temp[0] + " : " + temp[1]
         if mon_text == "":
-            mon_text = "X"
+            mon_text = "전화로 문의해주세요"
         if sat_text == "":
-            sat_text = "X"
+            sat_text = "전화로 문의해주세요"
         if hol_text == "":
-            hol_text = "X"
+            hol_text = "전화로 문의해주세요"
         ActionChains(driver).send_keys_to_element(use_time1, mon_text).perform()
         ActionChains(driver).send_keys_to_element(use_time2, sat_text).perform()
         ActionChains(driver).send_keys_to_element(use_time3, hol_text).perform()
@@ -349,7 +367,7 @@ class Work(QThread):
         detail = WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.CLASS_NAME, 'se2_input_wysiwyg')))
         if texts == "":
-            texts = "X"
+            texts = "전화로 문의해주세요"
         ActionChains(driver).send_keys_to_element(detail, texts).perform()
         driver.switch_to.default_content()
         time.sleep(3)
