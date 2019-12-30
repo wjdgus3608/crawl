@@ -18,8 +18,6 @@ class DataInputUI(QWidget):
         keyword_lb = QLabel('검색어', self)
         id_lb = QLabel('니짐내짐 ID', self)
         pw_lb = QLabel('니짐내짐 PW', self)
-        address_lb = QLabel('입력주소 어절', self)
-        address_des = QLabel('ex)서울 영등포구 양평로 64 한경빌딩 4층 -> 4입력(추천) -> 서울 영등포구 양평로', self)
 
         font1 = keyword_lb.font()
         font1.setPointSize(20)
@@ -30,20 +28,17 @@ class DataInputUI(QWidget):
         self.keyword_tx=QTextEdit()
         self.id_tx=QTextEdit()
         self.pw_tx=QTextEdit()
-        self.address_tx=QSpinBox()
+
 
         btn.clicked.connect(self.submit)
         self.keyword_tx.setMaximumSize(150,30)
         self.id_tx.setMaximumSize(150,30)
         self.pw_tx.setMaximumSize(150,30)
-        self.address_tx.setRange(1,6)
 
 #박스 설정
         hbox = self.add_box([keyword_lb,self.keyword_tx])
         hbox2 = self.add_box([id_lb,self.id_tx])
         hbox3 = self.add_box([pw_lb,self.pw_tx])
-        hbox4 = self.add_box([address_lb,self.address_tx])
-        hbox5 = self.add_box([address_des])
 
 
         hboxLast = QHBoxLayout()
@@ -56,8 +51,6 @@ class DataInputUI(QWidget):
         vbox.addLayout(hbox)
         vbox.addLayout(hbox2)
         vbox.addLayout(hbox3)
-        vbox.addLayout(hbox4)
-        vbox.addLayout(hbox5)
         vbox.addLayout(hboxLast)
         vbox.addStretch(3)
 
@@ -80,7 +73,7 @@ class DataInputUI(QWidget):
             self.data['ID']=idtxt
             self.data['PW']=pwtxt
             self.data['KEYWORD']=keywordtxt
-            self.data['ADD_CNT']=self.address_tx.value()
+            self.data['ADD_CNT']=4
             self.close()
         else:
             msgBox = QMessageBox()

@@ -2,6 +2,10 @@ import sys
 import os
 import index_ui, dataInput_ui, tag_ui, progress_ui, work
 from PyQt5.QtWidgets import *
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+import time
 
 ui=index_ui.IndexUI()
 mode=ui.run()
@@ -19,6 +23,39 @@ elif(mode==2):
 
 
 # work.Work({"KEYWORD":"스타짐 서면점","ID":"manager3","PW":"manager3","ADD_CNT":4}).run()
+
+# site = "http://dmonster874.cafe24.com/bbs/login.php?url=http%3A%2F%2Fdmonster874.cafe24.com%2F"
+#
+# driver = webdriver.Chrome(os.getcwd() + '/chromedriver.exe')
+# driver.set_page_load_timeout(100)
+# driver.get(site)
+# driver.implicitly_wait(3)
+#
+# id_box = driver.find_element_by_id('login_id')
+# pw_box = driver.find_element_by_id('login_pw')
+# login_btn = driver.find_element_by_class_name('btn_submit')
+# ActionChains(driver).send_keys_to_element(id_box, "manager3").send_keys_to_element(pw_box,
+#                                                                                                "manager3").click(
+#                 login_btn).perform()
+# admin_btn = driver.find_elements_by_tag_name('a')
+# ActionChains(driver).click(admin_btn[3]).perform()
+# driver.implicitly_wait(3)
+# input_tag = driver.find_element_by_class_name('frm_input')
+# driver.execute_script("arguments[0].setAttribute('value',arguments[1])", input_tag, "테스트")
+# input_tag.send_keys(Keys.ENTER)
+# tr=driver.find_elements_by_css_selector('tbody>tr')
+# print(tr)
+#
+# time.sleep(3)
+# select_tags=driver.find_elements_by_css_selector('#chk_flag>option')[2].click()
+# time.sleep(3)
+# tr2=driver.find_elements_by_css_selector('tbody>tr')
+# print(tr2)
+
+
+
+
+
 
 
 

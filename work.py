@@ -12,6 +12,7 @@ import os
 import index_ui, dataInput_ui, tag_ui, progress_ui
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, pyqtSignal
+from selenium.webdriver.common.keys import Keys
 
 class Work(QThread):
     countChanged = pyqtSignal(int)
@@ -75,38 +76,40 @@ class Work(QThread):
             ActionChains(driver).click(admin_btn[3]).perform()
             driver.implicitly_wait(3)
 
+            #중복 확인
             show2 = 0
-            for abc in range(0, len(self.data_list)):
-                print(self.data_list[abc]['title'])
-                self.insert_data(self.data_list[abc],driver)
-                self.click_submit(driver)
-                try:
-                    WebDriverWait(driver, 100).until(EC.alert_is_present(),
-                                                     'Timed out waiting for PA creation ' + 'confirmation popup to appear.')
-                    inserted=" --- 입력 완료"
+            for tmp in range(0, len(self.data_list)):
+                if self.dup_check(self.data_list[tmp],driver):
+                    #삽입
+                    print(self.data_list[tmp]['title'])
+                    self.insert_data(self.data_list[tmp],driver)
+                    self.click_submit(driver)
+                    try:
+                        WebDriverWait(driver, 100).until(EC.alert_is_present(),
+                                                         'Timed out waiting for PA creation ' + 'confirmation popup to appear.')
+                        inserted=" --- 입력 완료"
+                        self.insertChanged.emit(inserted)
+                    except:
+                        print("time out !!")
+                        inserted=" 입력 실패"
+                        self.insertChanged.emit(inserted)
+                        driver.refresh();
+                        tmp = tmp - 1
+                        self.out = True
+                        continue
+                    art = driver.switch_to.alert
+                    art.accept()
+                    driver.switch_to.default_content()
+                    time.sleep(2)
+                    self.qcnt = (tmp + 1) / len(self.data_list) * 100
+                    self.countChanged.emit(self.qcnt)
+                    print(show2)
+                    show2 = show2 + 1
+                else:
+                    inserted = " --- 중복 입력"
                     self.insertChanged.emit(inserted)
-                except:
-                    print("time out !!")
-                    inserted=" 입력 실패"
-                    self.insertChanged.emit(inserted)
-                    driver.refresh();
-                    abc = abc - 1
-                    self.out = True
-                    continue
-                art = driver.switch_to.alert
-                art.accept()
-                driver.switch_to.default_content()
-                time.sleep(2)
-                self.qcnt = (abc + 1) / len(self.data_list) * 100
-                self.countChanged.emit(self.qcnt)
-                print(show2)
-                show2 = show2 + 1
 
             break
-            ##파일저장
-            # url="http://ldb.phinf.naver.net/20160322_64/1458654453155zVjxg_JPEG/176272627752929_0.jpeg"
-            # myfile = requests.get(url)
-            # open('/home/jung/다운로드/abc.jpeg', 'wb').write(myfile.content)
 
     def fun1(self,keyword,driver):
         URL = "https://map.naver.com/?query=" + keyword + "&type=SITE_1&queryRank=0"
@@ -226,9 +229,9 @@ class Work(QThread):
             EC.presence_of_all_elements_located((By.CLASS_NAME, 'reg_file')))
         ele = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.NAME, 'bf_file[]')))
         if pic_cnt == 0:
-            ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
+            ele[0].send_keys(os.getcwd() + '/No_Picture.png')
         elif pic_cnt == 1 and data['images'][0] == None:
-            ele[0].send_keys(os.getcwd() + '/No_Picture.jpg')
+            ele[0].send_keys(os.getcwd() + '/No_Picture.png')
         else:
             for i in range(0, 20 if pic_cnt > 20 else pic_cnt):
                 pic_url = data['images'][i]
@@ -261,6 +264,9 @@ class Work(QThread):
         parse_num=self.input_data['ADD_CNT']
         for idx in range(0, parse_num if len(str_tmp) > parse_num else len(str_tmp)):
             add = add + str_tmp[idx] + " "
+            if (str_tmp[idx].find("로")!=-1 or str_tmp[idx].find("길")!=-1) and idx==3:
+                if (idx+1<len(str_tmp)):
+                    add = add + str_tmp[idx+1]
         ActionChains(driver).send_keys_to_element(locate, add).perform()
         ActionChains(driver).click(driver.find_element_by_class_name('btn_search')).perform()
         tmp_tag = WebDriverWait(driver, 60).until(
@@ -393,3 +399,52 @@ class Work(QThread):
             EC.presence_of_element_located((By.CLASS_NAME, 'btn_submit')))
         ActionChains(driver).click(submit_btn).perform()
 
+    def dup_check(self,data,driver):
+        input_tag = driver.find_element_by_class_name('frm_input')
+        driver.execute_script("arguments[0].setAttribute('value',arguments[1])", input_tag, data['title'])
+        input_tag.send_keys(Keys.ENTER)
+
+        if self.compare_list(data,driver):
+            return False
+        # WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'chk_flag')))
+        WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((By.ID, 'fancybox-loading')))
+        driver.find_elements_by_css_selector('#chk_flag>option')[2].click()
+        # time.sleep(3)
+        WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((By.ID, 'fancybox-loading')))
+        if self.compare_list(data, driver):
+            return False
+        return True
+
+    def compare_list(self,data,driver):
+        page_tags=driver.find_elements_by_css_selector('div.paging_wrap>li')
+        if len(page_tags)==0:
+            return False
+        times=0
+        while(times==0 or len(page_tags)>3):
+            page_tags = driver.find_elements_by_css_selector('div.paging_wrap>li')
+            tr = driver.find_elements_by_css_selector('tbody>tr')
+            if len(tr)==0:
+                return False
+            for tmp in tr:
+                title=tmp.find_element_by_css_selector('td.td_subject').text
+                address=tmp.find_elements_by_css_selector('td.td_num')[1].text
+                if title.find(data['title'])!=-1:
+                    if address.find(".")!=-1:
+                        address=address.split(".")
+                    elif address.find("(")!=-1:
+                        address = address.split("(")
+                    else:
+                        return False
+                    test=data['address'][0].replace(" ","")
+                    if test.find(address[0].replace(" ",""))!=-1:
+                        return True
+            if times==0 and len(page_tags)>1:
+                page_tags[1].click()
+            elif len(page_tags)<=3:
+                break
+            elif times!=0:
+                page_tags[3].click()
+            # time.sleep(5)
+            WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((By.ID, 'fancybox-loading')))
+            times=times+1
+        return False
