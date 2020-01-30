@@ -21,12 +21,20 @@ class IndexUI(QWidget):
 
         btn1 = QPushButton('데이터 입력', self)
         btn2 = QPushButton('종목 추가/삭제', self)
+        btn3 = QPushButton('없어진 헬스장 삭제', self)
         btn1.clicked.connect(self.onClick1)
         btn2.clicked.connect(self.onClick2)
+        btn3.clicked.connect(self.onClick3)
 
 #박스 설정
         hbox = self.add_box([btn1,btn2])
-        self.setLayout(hbox)
+        hbox2 = self.add_box([btn3])
+        vbox = QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addLayout(hbox)
+        vbox.addLayout(hbox2)
+        vbox.addStretch(1)
+        self.setLayout(vbox)
 
 
     def center(self):
@@ -42,6 +50,10 @@ class IndexUI(QWidget):
     def onClick2(self):
         print("onClick2 clicked!!")
         self.mode = 2;
+        self.close()
+    def onClick3(self):
+        print("onClick3 clicked!!")
+        self.mode = 3;
         self.close()
     def add_box(self,wid):
         hbox=QHBoxLayout()

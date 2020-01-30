@@ -73,7 +73,11 @@ class Work(QThread):
                                                                                                self.input_data['PW']).click(
                 login_btn).perform()
             admin_btn = driver.find_elements_by_tag_name('a')
-            ActionChains(driver).click(admin_btn[3]).perform()
+            real_btn=None
+            for i in range(0,len(admin_btn)):
+                if admin_btn[i].text.find("관리")!=-1:
+                    real_btn=admin_btn[i]
+            ActionChains(driver).click(real_btn).perform()
             driver.implicitly_wait(3)
 
             #중복 확인
@@ -112,7 +116,7 @@ class Work(QThread):
             break
 
     def fun1(self,keyword,driver):
-        URL = "https://map.naver.com/?query=" + keyword + "&type=SITE_1&queryRank=0"
+        URL = "https://map.naver.com/v5/search/" + keyword
         driver.get(URL)
         driver.implicitly_wait(10)
 
@@ -178,17 +182,18 @@ class Work(QThread):
         # 사진
         images = []
         pic_tag_check = driver.find_elements_by_css_selector('div.link_thumb>span')
-        if pic_tag_check[0].text.find("사진")!=-1:
-            pic_tag = driver.find_elements_by_css_selector('div.link_thumb>img')
-            if len(pic_tag) != 0:
-                ActionChains(driver).click(pic_tag[0]).perform()
-                #pic_list = driver.find_elements_by_css_selector('li.item_photo>a>img')
-                pic_list = driver.find_elements_by_css_selector('li.item_photo>a')
-                for tmp in pic_list:
-                    ActionChains(driver).click(tmp).perform()
-                    photo_tag=driver.find_element_by_css_selector('img.photo_viewer_thumb')
-                    images.append(photo_tag.get_attribute('src'))
-                driver.back()
+        if len(pic_tag_check)!=0:
+            if pic_tag_check[0].text.find("사진")!=-1:
+                pic_tag = driver.find_elements_by_css_selector('div.link_thumb>img')
+                if len(pic_tag) != 0:
+                    ActionChains(driver).click(pic_tag[0]).perform()
+                    #pic_list = driver.find_elements_by_css_selector('li.item_photo>a>img')
+                    pic_list = driver.find_elements_by_css_selector('li.item_photo>a')
+                    for tmp in pic_list:
+                        ActionChains(driver).click(tmp).perform()
+                        photo_tag=driver.find_element_by_css_selector('img.photo_viewer_thumb')
+                        images.append(photo_tag.get_attribute('src'))
+                    driver.back()
         # 데이터 만들기
         data = {}
         data['images'] = images
@@ -256,47 +261,42 @@ class Work(QThread):
         ActionChains(driver).send_keys_to_element(title, data['title']).perform()
 
         # 위치
+        add_search=driver.find_elements_by_css_selector('button.btn_frmline')
+        if len(add_search)!=0:
+            ActionChains(driver).click(add_search[0]).perform()
         iframe = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'iframe')))
         driver.switch_to.frame(iframe[0])
-        locate = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'gym_keyword')))
+        tmp_iframe=WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'iframe')))
+        driver.switch_to.frame(tmp_iframe[0])
+        address_box=driver.find_elements_by_css_selector('#region_name')
+        # locate = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'gym_keyword')))
         add = ""
+        print(data['address'])
         str_tmp = data['address'][0].split(" ")
-        parse_num=self.input_data['ADD_CNT']
-        for idx in range(0, parse_num if len(str_tmp) > parse_num else len(str_tmp)):
-            add = add + str_tmp[idx] + " "
-            if (str_tmp[idx].find("로")!=-1 or str_tmp[idx].find("길")!=-1) and idx==3:
-                if (idx+1<len(str_tmp)):
-                    add = add + str_tmp[idx+1]
-        ActionChains(driver).send_keys_to_element(locate, add).perform()
-        ActionChains(driver).click(driver.find_element_by_class_name('btn_search')).perform()
-        tmp_tag = WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located((By.ID, 'placesList'))).find_elements_by_tag_name('li')
-        if len(tmp_tag) != 0:
-            tf = False
-            pg = driver.find_elements_by_css_selector('#pagination>a')
-            pg_size = len(pg)
-            for j in range(0, pg_size):
-                pg = driver.find_elements_by_css_selector('#pagination>a')
-                if j!=0:
-                    ActionChains(driver).click(pg[j]).perform()
-                    time.sleep(1)
-                tags = WebDriverWait(driver, 60).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h5')))
-                stop = False
-                if tf==False:
-                    if len(tags)>2:
-                        ActionChains(driver).click(tags[1]).perform()
-                for k in range(0, len(tags)):
-                    my_txt = tags[k].text.replace(" ", "")
-                    if my_txt.find(data['title'].replace(" ", "")) != -1:
-                        tf = True
-                        print("find")
-                        ActionChains(driver).click(tags[k]).perform()
-                        stop = True
-                        break;
-                if stop:
-                    break;
+        idx=0
+        flag=False
+        while idx < len(str_tmp):
+            if not flag:
+                add = add + str_tmp[idx] + " "
+            else:
+                add = add + str_tmp[idx]
+                idx=idx+1
+                break
+            if (str_tmp[idx].find("로")!=-1 or str_tmp[idx].find("길")!=-1) and idx==2:
+                flag=True
+            idx=idx+1
+        sec_add=""
+        for i in range(idx,len(str_tmp)):
+            if i==len(str_tmp)-1:
+                sec_add = sec_add + str_tmp[i]
+            else:
+                sec_add = sec_add + str_tmp[i] + " "
+        ActionChains(driver).send_keys_to_element(address_box[0], add).perform()
+        ActionChains(driver).click(driver.find_element_by_css_selector('button.btn_search')).perform()
+        ActionChains(driver).click(driver.find_elements_by_css_selector('span.txt_addr')[0]).perform()
         driver.switch_to.default_content()
-        time.sleep(1)
+        sec_address=driver.find_element_by_name('addr2')
+        ActionChains(driver).send_keys_to_element(sec_address, sec_add).perform()
 
         # 세부내용 + 가격
         texts = ""
@@ -416,14 +416,12 @@ class Work(QThread):
         return True
 
     def compare_list(self,data,driver):
-        page_tags=driver.find_elements_by_css_selector('div.paging_wrap>li')
-        if len(page_tags)==0:
-            return False
-        times=0
-        while(times==0 or len(page_tags)>3):
-            page_tags = driver.find_elements_by_css_selector('div.paging_wrap>li')
+        flag = True
+        cur_page_num = 1
+        while flag:
+            WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((By.ID, 'fancybox-loading')))
             tr = driver.find_elements_by_css_selector('tbody>tr')
-            if len(tr)==0:
+            if len(tr) == 0:
                 return False
             for tmp in tr:
                 title=tmp.find_element_by_css_selector('td.td_subject').text
@@ -436,15 +434,24 @@ class Work(QThread):
                     else:
                         return False
                     test=data['address'][0].replace(" ","")
-                    if test.find(address[0].replace(" ",""))!=-1:
+                    if test.find(address[0].replace(" ","").rstrip('\n'))!=-1:
                         return True
-            if times==0 and len(page_tags)>1:
-                page_tags[1].click()
-            elif len(page_tags)<=3:
-                break
-            elif times!=0:
-                page_tags[3].click()
-            # time.sleep(5)
+            flag = self.move_next_page(driver, cur_page_num)
             WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((By.ID, 'fancybox-loading')))
-            times=times+1
+            cur_page_num = cur_page_num + 1
+        return False
+
+    def move_next_page(self,driver,cur_page_num):
+        page_tags = driver.find_elements_by_css_selector('div.paging_wrap>li')
+        for index in range(0,len(page_tags)):
+            tmp=page_tags[index]
+            if not tmp.text.isdigit():
+                continue
+            if int(tmp.text)==cur_page_num and index+1<len(page_tags):
+                if not page_tags[index+1].text.isdigit():
+                    continue
+                else:
+                    page_tags[index+1].click()
+                    return True
+
         return False

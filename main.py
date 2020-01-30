@@ -1,6 +1,6 @@
 import sys
 import os
-import index_ui, dataInput_ui, tag_ui, progress_ui, work
+import index_ui, dataInput_ui, tag_ui, progress_ui, work, delete, progress_ui_delete, work_delete
 from PyQt5.QtWidgets import *
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
@@ -20,9 +20,18 @@ if(mode==1):
             os.remove(file.path)
 elif(mode==2):
     ui_data=tag_ui.TagUI().run()
+elif(mode==3):
+    print("here")
+    ui_data=delete.DataInputUI().run()
+    print(ui_data)
+    if len(ui_data)!=0:
+        app = QApplication(sys.argv)
+        window = progress_ui_delete.ProgressUI(ui_data)
+        app.exec_()
 
-
-# work.Work({"KEYWORD":"스타짐 서면점","ID":"manager3","PW":"manager3","ADD_CNT":4}).run()
+# work.Work({"KEYWORD":"조아짐 강동구","ID":"manager3","PW":"manager3","ADD_CNT":4}).run()
+# work_delete.Work({"ID":"manager3","PW":"manager3"}).run()
+# progress_ui_delete.ProgressUIt("").run()
 
 # site = "http://dmonster874.cafe24.com/bbs/login.php?url=http%3A%2F%2Fdmonster874.cafe24.com%2F"
 #
